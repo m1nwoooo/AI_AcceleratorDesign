@@ -2,7 +2,7 @@
 Designed and implemented a hardware accelerator for Tiny Neural Networks using Verilog HDL
 
 
-● 구체적인 개발과정과 Waveform 등은 AI가속기설계_보고서.pdf로 첨부하였습니다.
+🔥 구체적인 개발과정과 Waveform 등은 AI가속기설계_보고서.pdf로 첨부하였습니다.
 
 Tiny Neural Network 하드웨어 가속기 설계 (Verilog)
 Tiny Neural Network(TNN)의 주요 연산을 Verilog HDL을 사용하여 하드웨어로 구현하고, 최종적으로 추론(Inference) 과정을 가속하는 시스템을 설계하는 것을 목표로 합니다.
