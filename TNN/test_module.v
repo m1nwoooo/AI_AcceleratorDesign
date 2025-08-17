@@ -57,9 +57,9 @@ input  a,
 input  b,
 output sum,
 output carry
-);                        // Half Adder   Carry in       .
+);                        // Half Adder는 Carry in이 없다.
 assign sum   = a ^ b; // Sum = a'b + ba' -> xor 
-assign carry = a & b; //1+1     쿡   carry    ߻ 
+assign carry = a & b; //1+1인 경우에만 carry가 발생
 endmodule                 //end declaration
 
                       // Full Adder
@@ -70,9 +70,9 @@ input  cin,
 output sum,
 output carry
 );
-assign sum   = a ^ b ^ cin;             //a,b,cin          1    ΰ  ų      0 ̾   sum   0 ̴ .
-assign carry = (a & b) | (b ^ a) & cin; //a   b   1      Ȥ  ,
-                                        //a   b        ϳ    1 ̰  carry in    ־   carry        .
+assign sum   = a ^ b ^ cin;             //a,b,cin의 조합이 1이 두개거나 모두 0이어야 sum이 0이다.
+assign carry = (a & b) | (b ^ a) & cin; //a와 b가 1일 때 혹은,
+                                        //a와 b 둘 중 하나가 1이고 carry in이 있어야 carry가 생긴다.
 endmodule                                   //end declaration
 
                                                                             // 8bits Ripple Carry Adder
@@ -83,16 +83,16 @@ output [7:0] S,
 output       Cout
 );
 wire [7:0] carry;                                                           //handle carry with vector
-                                                                             //by name         instanceȭ  Ѵ .
-half_adder HA0 (.a(A[0]),.b(B[0]),.sum(S[0]),.carry(carry[0]));              //LSB     carry in         ݰ   ⸦     Ѵ .
-full_adder FA0(.a(A[1]),.b(B[1]),.cin(carry[0]),.sum(S[1]),.carry(carry[1]));//     adder   carry    Ѿ      Ѿ  .
+                                                                             //by name 방식으로 instance화 한다.
+half_adder HA0 (.a(A[0]),.b(B[0]),.sum(S[0]),.carry(carry[0]));              //LSB에는 carry in이 없어 반가산기를 사용한다.
+full_adder FA0(.a(A[1]),.b(B[1]),.cin(carry[0]),.sum(S[1]),.carry(carry[1]));//이전 adder의 carry가 넘어오고 넘어간다.
 full_adder FA1(.a(A[2]),.b(B[2]),.cin(carry[1]),.sum(S[2]),.carry(carry[2]));
 full_adder FA2(.a(A[3]),.b(B[3]),.cin(carry[2]),.sum(S[3]),.carry(carry[3]));
 full_adder FA3(.a(A[4]),.b(B[4]),.cin(carry[3]),.sum(S[4]),.carry(carry[4]));
 full_adder FA4(.a(A[5]),.b(B[5]),.cin(carry[4]),.sum(S[5]),.carry(carry[5]));
 full_adder FA5(.a(A[6]),.b(B[6]),.cin(carry[5]),.sum(S[6]),.carry(carry[6]));
-full_adder FA6(.a(A[7]),.b(B[7]),.cin(carry[6]),.sum(S[7]),.carry(Cout));     //output     sum[7:0],Cout      
-                                                                              //Ripple Carry Adder    ϼ  Ǿ   .
+full_adder FA6(.a(A[7]),.b(B[7]),.cin(carry[6]),.sum(S[7]),.carry(Cout));     //output으로 sum[7:0],Cout을 뱉는
+                                                                              //Ripple Carry Adder가 완성되었다.
 
 endmodule                                                                         //end declaration
 
@@ -103,25 +103,25 @@ input   [3:0] B,
 output  [7:0] P
 );
 
-wire signed [3:0] signed_A = A;                                         //A   unsigned     signed      ͷ    ȯ                     Ѵ .
-wire signed [7:0] signedEx_A= {{4{signed_A[3]}}, signed_A};             //A   concatenate   8  Ʈ       ȣȮ   Ͽ       bit shift   MSB        Ѵ .
-                                                                         //B             ̿ ǹǷ        ʿ    .
-wire signed [7:0] result0, result1, result2, result3;                   //B    ڸ      A                      ϱ       wire    
+wire signed [3:0] signed_A = A;                                         //A를 unsigned에서 signed 데이터로 전환해 음수의 곱까지 고려한다.
+wire signed [7:0] signedEx_A= {{4{signed_A[3]}}, signed_A};             //A를 concatenate로 8비트까지 부호확장하여 추후 bit shift시 MSB를 보장한다.
+                                                                         //B는 곱셈에만 이용되므로 굳이 필요없다.
+wire signed [7:0] result0, result1, result2, result3;                   //B의 자리수와 A의 곱셈 결과를 전부 더하기 위해 wire선언
 wire signed [7:0] sum1, sum2, sum3;
 wire c1, c2, c3;
 
-assign result0 = {8{B[0]}} & signedEx_A;                                //operand B    ڸ          Ͽ  signedEx_A       
-assign result1 = ({8{B[1]}} & signedEx_A) << 1;                         //10    ڸ       ߱       1  Ʈ shift
-assign result2 = ({8{B[2]}} & signedEx_A) << 2;                         //100    ڸ       ߱       2  Ʈ shift
-assign result3 = (({8{B[3]}} & signedEx_A) << 3) - (({4{B[3]}} & signedEx_A) << 4); //MSB(B[3])   1             ̹Ƿ 
-                                                                                    //          ϵ           ش .
-// Adder    ջ 
-adder8 add1(.A(result0),  .B(result1), .S(sum1), .Cout(c1));            //    ڸ      Adder        Ѵ .
-adder8 add2(.A(sum1),     .B(result2), .S(sum2), .Cout(c2));            //add1   sum1   add2   input    Ǿ          
-adder8 add3(.A(sum2),     .B(result3), .S(sum3), .Cout(c3));            //add              ְ   ȴ .
+assign result0 = {8{B[0]}} & signedEx_A;                                //operand B의 자리수를 고려하여 signedEx_A와 연산
+assign result1 = ({8{B[1]}} & signedEx_A) << 1;                         //10의 자리를 맞추기 위해 1비트 shift
+assign result2 = ({8{B[2]}} & signedEx_A) << 2;                         //100의 자리를 맞추기 위해 2비트 shift
+assign result3 = (({8{B[3]}} & signedEx_A) << 3) - (({4{B[3]}} & signedEx_A) << 4); //MSB(B[3])가 1인 경우 음수 이므로
+                                                                                    //음수곱을 하도록 보정해준다.
+// Adder로 합산
+adder8 add1(.A(result0),  .B(result1), .S(sum1), .Cout(c1));            //각 자리수를 Adder로 연산한다.
+adder8 add2(.A(sum1),     .B(result2), .S(sum2), .Cout(c2));            //add1의 sum1이 add2의 input이 되어 여러번의
+adder8 add3(.A(sum2),     .B(result3), .S(sum3), .Cout(c3));            //add를 수행할 수 있게 된다.
 
-//         
-assign P = sum3;                                                        //                multiplier   output          Ѵ .
+// 최종 출력
+assign P = sum3;                                                        //최종 연산 결과를 multiplier의 output으로 설정한다.
 endmodule
 
 
@@ -133,12 +133,12 @@ output [15:0] S,
 output        Cout
 );
 wire [15:0] carry;
-half_adder ha0 (.a(A[0]), .b(B[0]), .sum(S[0]), .carry(carry[0]));//1     HA instanceȭ 
+half_adder ha0 (.a(A[0]), .b(B[0]), .sum(S[0]), .carry(carry[0]));//1개의 HA instance화 
 genvar i;
-generate                                                //8  Ʈ adder              
-    for (i = 1; i < 16; i = i + 1) begin : full_adders  // Լ      ,   ȯ      ũ    ǹ         ʴ .
-        full_adder fa (                                 // ݺ       ̿                
-            .a(A[i]),               //15     FA   instanceȭ
+generate                                                //8비트 adder와 동일한 원리
+    for (i = 1; i < 16; i = i + 1) begin : full_adders  //함수 선언, 반환 값이 크게 의미있지는 않다.
+        full_adder fa (                                 //반복문을 이용해 가독성을 향상
+            .a(A[i]),               //15개의 FA를 instance화
             .b(B[i]),               
             .cin(carry[i-1]),
             .sum(S[i]),
@@ -150,20 +150,20 @@ assign Cout = carry[15];
 endmodule
 
 // Unsigned 4-bit Multiplier
-module multiplier4_unsigned(                                        //A     4  Ʈ   B     4  Ʈ                
+module multiplier4_unsigned(                                        //A하위 4비트와 B하위 4비트를 연산할 곱셈기
 input   [3:0] A,
 input   [3:0] B,
 output  [7:0] P
 );
-wire [7:0] multiplicand = {4'b0000, A};                         //unsigned extension ص        .
-wire [7:0] partial0, partial1, partial2, partial3;              //B    ڸ      A                      ϱ       wire    
+wire [7:0] multiplicand = {4'b0000, A};                         //unsigned extension해도 괜찮다.
+wire [7:0] partial0, partial1, partial2, partial3;              //B의 자리수와 A의 곱셈 결과를 전부 더하기 위해 wire선언
 wire [7:0] sum1, sum2, sum3;
 wire c1, c2, c3;
 
 assign partial0 = B[0] ? multiplicand : 8'b0;
 assign partial1 = B[1] ? (multiplicand << 1) : 8'b0;
 assign partial2 = B[2] ? (multiplicand << 2) : 8'b0;
-assign partial3 = B[3] ? (multiplicand << 3) : 8'b0;            //   *    ̤ӹǷ                 ʿ    .
+assign partial3 = B[3] ? (multiplicand << 3) : 8'b0;            //양수*양수이ㅣ므로 음수 곱 고려가 필요없다.
 
 adder8 add1(.A(partial0), .B(partial1), .S(sum1), .Cout(c1));
 adder8 add2(.A(sum1),     .B(partial2), .S(sum2), .Cout(c2));
@@ -172,19 +172,19 @@ adder8 add3(.A(sum2),     .B(partial3), .S(sum3), .Cout(c3));
 assign P = sum3;
 endmodule
 
-module signed_unsigned_mul4 (                                   //A        4  Ʈ   B        4  Ʈ       
+module signed_unsigned_mul4 (                                   //A의 상위 4비트와 B의 하위 4비트 곱셈기
 input  [3:0] A,  
 input  [3:0] B,  
 output [7:0] P   
 );
-wire sign_A = A[3];                      //A          Ʈ ̹Ƿ    ȣ       ؾ  Ѵ .
-wire [3:0] abs_A = (sign_A) ? (~A + 1'b1) : A;  //    밪    ̿           , MSB              ̴ .
+wire sign_A = A[3];                      //A는 상위 비트이므로 부호를 고려해야한다.
+wire [3:0] abs_A = (sign_A) ? (~A + 1'b1) : A;  // 절대값을 이용해 연산 후, MSB를 고려할 예정이다.
                     
 
 wire [3:0] unsigned_B = B;                      
 
-wire [7:0] partial0 = unsigned_B[0] ? {4'b0, abs_A} : 8'b0;         //A   B               ش .
-wire [7:0] partial1 = unsigned_B[1] ? {3'b0, abs_A, 1'b0} : 8'b0; //8  Ʈ      ߾   ش  ϴ   ڸ         ߾  ش .
+wire [7:0] partial0 = unsigned_B[0] ? {4'b0, abs_A} : 8'b0;         //A와 B의 연산을 취해준다.
+wire [7:0] partial1 = unsigned_B[1] ? {3'b0, abs_A, 1'b0} : 8'b0; //8비트에 맞추어 해당하는 자리수에 맞추어준다.
 wire [7:0] partial2 = unsigned_B[2] ? {2'b0, abs_A, 2'b0} : 8'b0;
 wire [7:0] partial3 = unsigned_B[3] ? {1'b0, abs_A, 3'b0} : 8'b0;
 
@@ -193,25 +193,25 @@ wire [7:0] sum2;
 wire [7:0] unsigned_product;
 wire carry1, carry2, carry3;
 
-adder8 add1 (.A(partial0), .B(partial1), .S(sum1), .Cout(carry1));  //   partial        add   ش .
+adder8 add1 (.A(partial0), .B(partial1), .S(sum1), .Cout(carry1));  //각 partial 곱들을 add해준다.
 adder8 add2 (.A(sum1), .B(partial2), .S(sum2), .Cout(carry2));
 adder8 add3 (.A(sum2), .B(partial3), .S(unsigned_product), .Cout(carry3));
 
-//         ȣ     
-assign P = (sign_A) ? (~unsigned_product + 1'b1) : unsigned_product;//MSB   1 ̾  ٸ   ٽ  2                 ȯ Ѵ .
+// 결과에 부호 적용
+assign P = (sign_A) ? (~unsigned_product + 1'b1) : unsigned_product;//MSB가 1이었다면 다시 2의 보수를 취해 반환한다.
 endmodule
 
-module unsigned_signed_mul4 (                           //A        4  Ʈ   B        4  Ʈ        Ѵ .
+module unsigned_signed_mul4 (                           //A의 하위 4비트와 B의 상위 4비트를 곱셈한다.
 input  [3:0] A,  
 input  [3:0] B,  
 output [7:0] P   
 );
 wire [3:0] unsigned_A = A;
 
-wire sign_B = B[3];                                 //B     /      Ǵ  Ѵ .
-wire [3:0] abs_B = (sign_B) ? (~B + 1'b1) : B;  //    밪            ,    ߿    ȣ       ش .
+wire sign_B = B[3];                                 //B의 음/양을 판단한다.
+wire [3:0] abs_B = (sign_B) ? (~B + 1'b1) : B;  // 절대값으로 연산 후, 나중에 부호 고려해준다.
 
-wire [7:0] partial0 = abs_B[0] ? {4'b0, unsigned_A} : 8'b0;     //partial             ϰ  ,  ڸ         ߾  shift   ش .
+wire [7:0] partial0 = abs_B[0] ? {4'b0, unsigned_A} : 8'b0;     //partial 곱들을 생성하고 , 자리수에 맞추어 shift해준다.
 wire [7:0] partial1 = abs_B[1] ? {3'b0, unsigned_A, 1'b0} : 8'b0;
 wire [7:0] partial2 = abs_B[2] ? {2'b0, unsigned_A, 2'b0} : 8'b0;
 wire [7:0] partial3 = abs_B[3] ? {1'b0, unsigned_A, 3'b0} : 8'b0;
@@ -225,53 +225,53 @@ adder8 add1 (.A(partial0), .B(partial1), .S(sum1), .Cout(carry1));
 adder8 add2 (.A(sum1), .B(partial2), .S(sum2), .Cout(carry2));
 adder8 add3 (.A(sum2), .B(partial3), .S(unsigned_product), .Cout(carry3));
 
-assign P = (sign_B) ? (~unsigned_product + 1'b1) : unsigned_product;    //             ȣ         ش .
+assign P = (sign_B) ? (~unsigned_product + 1'b1) : unsigned_product;    //최종 결과에 부호를 고려해준다.
 endmodule
 
 module mac8(
 input               clk,        
 input               rst,
-input               en,             //     enable   ȣ
+input               en,             //연산 enable 신호
 input   [7:0]       A,
 input   [7:0]       B,
-output reg          busy,           //              Ÿ      ÷   
-output reg [15:0]   M               //          
+output reg          busy,           //연산 중임을 나타내는 플래그
+output reg [15:0]   M               //누적된 결과
 ); 
-wire [7:0] signed_A = A;            //  Է  A, B     ȣ  ִ  8  Ʈ       
+wire [7:0] signed_A = A;            // 입력 A, B를 부호 있는 8비트 값으로
 wire [7:0] signed_B = B;
-reg [2:0] state;                    //fsm state     
-reg [15:0] total;                   //            reg
+reg [2:0] state;                    //fsm state 변수
+reg [15:0] total;                   //누적값 저장 reg
 
-wire [3:0] A_high = signed_A[7:4];  //A   B        Ͽ  4  Ʈ               ̴  
+wire [3:0] A_high = signed_A[7:4];  //A와 B를 분할하여 4비트씩 연산할 예정이다 
 wire [3:0] A_low = signed_A[3:0];
 wire [3:0] B_high = signed_B[7:4];
 wire [3:0] B_low = signed_B[3:0];
 
-wire [7:0] out0, out1, out2, out3;  //           wire    ް 
-reg [7:0] out0_reg, out1_reg, out2_reg, out3_reg;//reg                   ؾ  Ѵ 
+wire [7:0] out0, out1, out2, out3;  //연산 결과를 wire로 받고
+reg [7:0] out0_reg, out1_reg, out2_reg, out3_reg;//reg에 곱셈 결과를 저장해야한다
 
-wire [15:0] total0, total1, total2, totalAll;//                Ͽ           
+wire [15:0] total0, total1, total2, totalAll;//곱셈 결과를 덧셈하여 저장할 곳
 wire carry_total, c1, c2, cAll;
 
-multiplier4_unsigned mul0 (.A(A_low), .B(B_low), .P(out0));//     Ʈ                 ν  Ͻ ȭ
+multiplier4_unsigned mul0 (.A(A_low), .B(B_low), .P(out0));//각 비트들을 곱셈할 모듈 인스턴스화
 unsigned_signed_mul4 mul1 (.A(A_low), .B(B_high), .P(out1));
 signed_unsigned_mul4 mul2 (.A(A_high), .B(B_low), .P(out2));
 multiplier4          mul3 (.A(A_high), .B(B_high), .P(out3));
 
 
-wire [15:0] out0_ext = {{8'b0}, out0_reg}; //                  16  Ʈ   extension ϰ   ڸ           ش .
+wire [15:0] out0_ext = {{8'b0}, out0_reg}; //각각의 곱셈 결과를 16비트로 extension하고 자리수를 맞춰준다.
 wire [15:0] out1_ext = {{4{out1_reg[7]}}, out1_reg, 4'b0};
 wire [15:0] out2_ext = {{4{out2_reg[7]}}, out2_reg, 4'b0}; 
 wire [15:0] out3_ext = {out3_reg, {8'b0}};
 
-adder16 add0    (.A(total), .B(out0_ext), .S(total0), .Cout(carry_total));//              ext              ϴ      instance  ȭ
+adder16 add0    (.A(total), .B(out0_ext), .S(total0), .Cout(carry_total));//각 곱셈 결과를 ext한 결과를 덧셈하는 모듈 instanceㅇ화
 adder16 add1   (.A(total0), .B(out1_ext), .S(total1), .Cout(c1));
 adder16 add2  (.A(total1), .B(out2_ext), .S(total2), .Cout(c2));
 adder16 addAll (.A(total2), .B(out3_ext), .S(totalAll), .Cout(cAll));
 
 always @(posedge clk) begin
     if (rst) begin
-        //                 ,    갪, busy  ÷  ׸   ʱ ȭ Ѵ .
+        // 리셋 시 모든 상태, 누산값, busy 플래그를 초기화한다.
         state <= 3'b000;
         M <= 16'b0;
         total <= 16'b0;  
@@ -281,47 +281,47 @@ always @(posedge clk) begin
     else begin
         case (state)
             3'b000: begin 
-                //en   ȣ            κ     out0          Ϳ       Ѵ .
+                //en 신호가 있을 때 부분 곱 out0를 레지스터에 저장한다.
                 if (en) begin
-                    busy <= 1'b1;      //             ǥ  
-                    out0_reg <= out0;  // A_low * B_low           
+                    busy <= 1'b1;      // 연산 중임을 표시
+                    out0_reg <= out0;  // A_low * B_low 결과를 저장
                     state <= 3'b001;
                 end
             end
             3'b001: begin 
-                // out1                 ϰ , total                   
+                // out1 곱셈 결과를 저장하고, total과 결합한 결과를 출력
                 out1_reg <= out1;      
-                M <= M;         //       ʱⰪ+ ù  κ    
+                M <= M;         // 누산 초기값+ 첫 부분 곱
                 state <= 3'b010;
                 //$display("total0: %b", total0);
             end
             3'b010: begin
-                // out2              ,                 Ͽ  total1     
+                // out2 곱셈 결과 저장, 이전 누산과 결합하여 total1 갱신
                 out2_reg <= out2;
-                M <= M;         //    갪 +      °  κ    
+                M <= M;         // 누산값 + 두 번째 부분 곱
                 state <= 3'b011;
                 //$display("total1: %b", total1);
             end
             3'b011: begin
-                // out3                  total2        
+                // out3 곱셈 결과 저장 및 total2 결과 출력
                 out3_reg <= out3;
-                M <= M;         //    갪 +       °  κ    
+                M <= M;         // 누산값 +  세 번째 부분 곱
                 state <= 3'b100;
                 //$display("total2: %b", total2);
             end
             3'b100: begin
-                //         갪(totalAll)         Ʈ Ѵ .
-                total <= totalAll;  //total     
-                M <= totalAll;       //      MAC        
+                // 최종 누산값(totalAll)을 업데이트한다.
+                total <= totalAll;  //total 계산용
+                M <= totalAll;       // 최종 MAC 결과 출력
                 out0_reg <= out0;
                 state <= 3'b001;
                // $display("totalAll: %b", totalAll);
                 
-                if (en) begin// en   ȣ                         ϰų  busy  ÷  ׸       Ѵ .
+                if (en) begin// en 신호에 따라 다음 연산을 시작하거나 busy 플래그를 해제한다.
                     out0_reg <= out0;
                     state <= 3'b001;
                 end else begin
-                    busy <= 1'b0;  //              busy    0    state  ʱ ȭ
+                    busy <= 1'b0;  // 연산 종료 시 busy 를 0 및 state 초기화
                     state <= 3'b101;
                 end   
             end
@@ -335,9 +335,9 @@ always @(posedge clk) begin
                 busy<=0;
                 end
                 
-            default: begin              //    ó  
-                //$display("wrong state");  // state   Ƣ         ߻      ޽       
-                state <= 3'b000;    //x   z         ġ    Ѱ  ̸  0       ְ    ش .
+            default: begin              //예외처리
+                //$display("wrong state");  // state가 튀면 에러 발생 시 메시지 출력
+                state <= 3'b000;    //x나 z같은 예상치 못한값이면 0들어갈 수 있게해준다.
             end
         endcase 
     end
@@ -352,129 +352,129 @@ input               clk,
 input               rst,              
 input [6:0]         cnt,             
 
-input       [7:0]   data_from_left,   //    ʿ           8  Ʈ        (A    )
-output reg  [7:0]   data_to_right,    //               ޵Ǵ  8  Ʈ       
+input       [7:0]   data_from_left,   // 왼쪽에서 들어오는 8비트 데이터 (A 행렬)
+output reg  [7:0]   data_to_right,    // 오른쪽으로 전달되는 8비트 데이터
 
-input       [15:0]  data_from_top,    //    ʿ           16  Ʈ        (B    )
-output reg  [15:0]  data_to_bottom,   //  Ʒ       ޵Ǵ  16  Ʈ        (        )
+input       [15:0]  data_from_top,    // 위쪽에서 들어오는 16비트 데이터 (B 행렬)
+output reg  [15:0]  data_to_bottom,   // 아래로 전달되는 16비트 데이터 (연산 결과)
 
 input               en,              
-input               req_out           //       û
+input               req_out           // 출력 요청
 );
-wire [15:0] mac_M;                        // MAC         
-wire        mac_busy;                     // MAC       busy        ȣ
+wire [15:0] mac_M;                        // MAC 연산 결과
+wire        mac_busy;                     // MAC 모듈의 busy 상태 신호
 
-wire [7:0] se_A = data_from_left;           //    ʿ              ͸  MAC  Է  A       
-wire [7:0] se_B = data_from_top[7:0];       //    ʿ                       8  Ʈ   MAC  Է  B       
+wire [7:0] se_A = data_from_left;           // 왼쪽에서 들어온 데이터를 MAC 입력 A로 연결
+wire [7:0] se_B = data_from_top[7:0];       // 위쪽에서 들어온 데이터의 하위 8비트를 MAC 입력 B로 연결
 
-// 8  Ʈ MAC      ν  Ͻ ȭ
+// 8비트 MAC 모듈 인스턴스화
 mac8 se_mac (
     .clk  (clk),                         
     .rst  (rst),                 
     .en   (en),                          
-    .A    (se_A),                           // A  Է             
-    .B    (se_B),                           // B  Է             
-    .busy (mac_busy),                     // MAC   busy
-    .M    (mac_M)                         // MAC             
+    .A    (se_A),                           // A 입력 데이터 연결
+    .B    (se_B),                           // B 입력 데이터 연결
+    .busy (mac_busy),                     // MAC의 busy
+    .M    (mac_M)                         // MAC 연산 결과 출력
 );
 
-// Ŭ       ȭ    
+// 클럭 동기화 블록
 always @(posedge clk) begin
     if (rst) begin
-        data_to_right <= 8'd0;            //                            ʱ ȭ
-        data_to_bottom<= 16'd0;           //          Ʒ                ʱ ȭ
+        data_to_right <= 8'd0;            // 리셋 시 오른쪽 출력 데이터 초기화
+        data_to_bottom<= 16'd0;           // 리셋 시 아래쪽 출력 데이터 초기화
     end
     else begin
-        data_to_right <= data_to_right;   //     Ʈ                  
-        data_to_bottom<= data_to_bottom;  //     Ʈ    Ʒ            
+        data_to_right <= data_to_right;   // 디폴트로 오른쪽 출력 유지
+        data_to_bottom<= data_to_bottom;  // 디폴트로 아래쪽 출력 유지
         
         if (en && (cnt % 4 == 0)) begin
-            data_to_right <= data_from_left;  // Ȱ  ȭ ǰ  ī   Ͱ  4           ,           ͸                 
-            data_to_bottom <= data_from_top;  //           ͸   Ʒ        
+            data_to_right <= data_from_left;  // 활성화되고 카운터가 4의 배수일 때, 왼쪽 데이터를 오른쪽으로 전달
+            data_to_bottom <= data_from_top;  // 위쪽 데이터를 아래로 전달
         end
     
         if (req_out)
-            data_to_bottom <= mac_M;         //       û    MAC        Ʒ        
+            data_to_bottom <= mac_M;         // 출력 요청 시 MAC 결과를 아래로 전달
     end
 end
 endmodule
 
-// 4x4 Systolic Array    
+// 4x4 Systolic Array 모듈
 module sa8_4x4 (
 input                   clk,              
 input                   rst,              
 input                   en,               
-input                   req_out,          //       û
+input                   req_out,          // 출력 요청
 input       [8*4-1:0]   A,                
 input       [8*4-1:0]   B,                
-output  reg [16*4-1:0]  C,                // 4x16  Ʈ         (        )
+output  reg [16*4-1:0]  C,                // 4x16비트 출력 행렬 (연산 결과)
 output  reg             busy              
 );
-wire [7:0] A_row[0:3];                        // A                  и 
-wire [7:0] B_col[0:3];                        // B                  и 
+wire [7:0] A_row[0:3];                        // A 행렬을 행 단위로 분리
+wire [7:0] B_col[0:3];                        // B 행렬을 열 단위로 분리
 
-// A       8  Ʈ            и 
+// A 행렬을 8비트 행 단위로 분리
 assign A_row[0] = A[31:24];                  
 assign A_row[1] = A[23:16];                   
 assign A_row[2] = A[15:8];                    
 assign A_row[3] = A[7:0];                    
 
-// B       8  Ʈ            и 
+// B 행렬을 8비트 열 단위로 분리
 assign B_col[0] = B[31:24];                   
 assign B_col[1] = B[23:16];                
 assign B_col[2] = B[15:8];                    
 assign B_col[3] = B[7:0];                     
 
-wire [7:0]  data_right[0:3][0:3];             //    SE                    
-wire [15:0] data_bottom[0:3][0:3];            //    SE    Ʒ              
+wire [7:0]  data_right[0:3][0:3];             // 각 SE의 오른쪽 출력 데이터
+wire [15:0] data_bottom[0:3][0:3];            // 각 SE의 아래쪽 출력 데이터
 
 reg [6:0] cnt;                       
-// ī        busy   ȣ         
+// 카운터 및 busy 신호 제어 블록
 always @(posedge clk) begin
     if(rst) begin
-        cnt <= 6'd1;//   ½  count   busy    ʱ ȭ
+        cnt <= 6'd1;//리셋시 count와 busy를 초기화
         busy <= 1'b0;
     end
     if(en||cnt!=6'd1)begin
         if(cnt==6'd47)
             cnt<=1'd1;
             else
-            cnt<=cnt+1'd1;//    Ŭ           busy ó  
+            cnt<=cnt+1'd1;//사이클 수에 따른 busy 처리
         end
         busy <= (cnt!=6'd0) && (cnt<6'd41);
         
 end
 
-// 4x4 SE        ν  Ͻ ȭ  Ͽ          
+// 4x4 SE 모듈을 인스턴스화 하여 행렬 생성
 genvar i, j;
 generate
-    for (i = 0; i < 4; i = i + 1) begin : row           //               
-        for (j = 0; j < 4; j = j + 1) begin : col       //               
+    for (i = 0; i < 4; i = i + 1) begin : row           // 행 단위로 루프
+        for (j = 0; j < 4; j = j + 1) begin : col       // 열 단위로 루프
             se8 sa_se8 (
-                .clk(clk),                              // Ŭ     ȣ     
-                .rst(rst),                              //        ȣ     
-                .data_from_left( (j == 0) ? A_row[i] : data_right[i][j-1] ), // ù      A_row,               SE      
-                .data_from_top(  (i == 0) ? {8'b0, B_col[j]} : data_bottom[i-1][j] ), // ù      B_col,             SE      
-                .data_to_right(  data_right[i][j] ),    //                       
-                .data_to_bottom( data_bottom[i][j] ),   //  Ʒ               
+                .clk(clk),                              // 클럭 신호 연결
+                .rst(rst),                              // 리셋 신호 연결
+                .data_from_left( (j == 0) ? A_row[i] : data_right[i][j-1] ), // 첫 열은 A_row, 나머지는 이전 SE의 출력
+                .data_from_top(  (i == 0) ? {8'b0, B_col[j]} : data_bottom[i-1][j] ), // 첫 행은 B_col, 나머지는 위 SE의 출력
+                .data_to_right(  data_right[i][j] ),    // 오른쪽으로 데이터 전달
+                .data_to_bottom( data_bottom[i][j] ),   // 아래로 데이터 전달
                 .en((cnt >= (i+j)*4 + 1) && (cnt <= (i+j)*4 + 16)), 
-                .req_out(req_out),                      // req_out   ȣ     
+                .req_out(req_out),                      // req_out 신호 연결
                 .cnt(cnt)                               
             );
         end
     end
 endgenerate
 
-//         C     
-//req_out   ȣ      ޹ް      Ϸ   C  ĵ        Ѵ .
-//1cycle                             ̴´ .
+// 출력 행렬 C 생성
+//req_out 신호를 전달받고 연산완료된 C행렬들을 출력한다.
+//1cycle 간격으로 가장 마지막 행부터 뽑는다.
 always @(*) begin
     case(cnt)
         43: C <= {data_bottom[3][0], data_bottom[3][1], data_bottom[3][2], data_bottom[3][3]};
         44: C <= {data_bottom[2][0], data_bottom[2][1], data_bottom[2][2], data_bottom[2][3]}; 
         45: C <= {data_bottom[1][0], data_bottom[1][1], data_bottom[1][2], data_bottom[1][3]}; 
         46: C <= {data_bottom[0][0], data_bottom[0][1], data_bottom[0][2], data_bottom[0][3]};  
-        default: C <= {data_bottom[3][0], data_bottom[3][1], data_bottom[3][2], data_bottom[3][3]}; //default   B      Ʒ     Ѱ  ִ      row     ̴ .
+        default: C <= {data_bottom[3][0], data_bottom[3][1], data_bottom[3][2], data_bottom[3][3]}; //default는 B에서 아래로 넘겨주는 행렬 row값들이다.
     endcase
 end
 
