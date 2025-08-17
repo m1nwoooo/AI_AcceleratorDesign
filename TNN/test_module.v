@@ -1,7 +1,7 @@
 /***************************************************************************
  * Copyright (C) 2025 Intelligent System Architecture (ISA) Lab. All rights reserved. 
  * 
- * This file is written solely for academic use in 
+ * This file is written solely for academic use in
  * AI Accelerator Design course assignement 
  * School of Electrical and Electronic Engineering, Konkuk University 
  *
