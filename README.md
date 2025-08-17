@@ -33,8 +33,6 @@ FC Layer의 핵심인 MAC 연산을 수행하는 모듈입니다. 8비트 입력
 3. 4x4 Systolic Array
 16개의 MAC 유닛을 2차원 배열로 연결하여 4x4 행렬 곱셈을 병렬로 처리하는 Systolic Array를 Output Stationary 방식으로 구현했습니다. 이 구조는 데이터 재사용성을 극대화하여 행렬 곱셈 연산을 효율적으로 가속합니다.
 
-<img width="825" height="524" alt="image" src="https://github.com/user-attachments/assets/95e8fe16-ad79-4e73-90db-440fbcdf56f8" />
-
 
 4. Tiled Matrix Multiplication (8x8)
 과제 4에서는 4x4 Systolic Array를 활용하여 더 큰 8x8 행렬 곱셈을 수행하기 위해 타일링(Tiling) 기법을 적용했습니다. Controller가 8x8 행렬을 4x4 크기의 타일로 나누고, 메모리에서 필요한 타일 데이터를 읽어와 Systolic Array에서 연산한 후, 부분 합을 누적하여 최종 결과를 완성합니다.
